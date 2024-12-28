@@ -5,7 +5,16 @@ import pytest
 from postgre.postgre import fetch_records
 
 @pytest.fixture(scope="function")
-def create_data():
+def setup_database():
+
+    # Setup
+    execute_sql_file("sql/start.sql")
+    yield
+    # Teardown
+    execute_sql_file("sql/end.sql")
+
+
+def execute_sql_file(file_path):
     conn = psycopg2.connect(
         dbname="test",
         user="postgres",
@@ -14,36 +23,17 @@ def create_data():
         port=5432
     )
 
-    with conn:
-        with conn.cursor() as cur:
-            # SQLクエリの実行
-            try:
-                cur.execute("TRUNCATE TABLE sample_table;")
-                cur.execute(
-                    "INSERT INTO sample_table " +
-                    "(name,description,quantity,price,is_active,created_at,updated_at) " + 
-                    "VALUES " +
-                    "('名前','長文テキスト',100,1.25,True,TIMESTAMP '2024-12-28 23:19:55.094',TIMESTAMP '2024-12-28 23:20:05.461');")
-                conn.commit()
-            except Exception as e:
-                conn.rollback()
-                print(f"エラーが発生しました: {e}")
+    with open(file_path, 'r', encoding='utf-8') as sql_file:
+        sql_data = sql_file.read()
+    with conn.cursor() as cur:
+        try:
+            cur.execute(sql_data)
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            print(f"エラーが発生しました: {e}")
 
-    yield
-
-    with conn:
-        with conn.cursor() as cur:
-            # SQLクエリの実行
-            try:
-                cur.execute("TRUNCATE TABLE sample_table;")
-                conn.commit()
-            except Exception as e:
-                conn.rollback()
-                print(f"エラーが発生しました: {e}")
-
-
-
-def test_fetch_records():
+def test_fetch_records(setup_database):
 
     # Call the function
     result = fetch_records()

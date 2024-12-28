@@ -1,0 +1,1 @@
+TRUNCATE TABLE sample_table;
