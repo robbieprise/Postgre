@@ -4,16 +4,6 @@ import psycopg2
 import pytest
 from postgre.postgre import fetch_records
 
-@pytest.fixture(scope="function")
-def setup_database():
-
-    # Setup
-    execute_sql_file("sql/start.sql")
-    yield
-    # Teardown
-    execute_sql_file("sql/end.sql")
-
-
 def execute_sql_file(file_path):
     conn = psycopg2.connect(
         dbname="test",
@@ -33,10 +23,15 @@ def execute_sql_file(file_path):
             conn.rollback()
             print(f"エラーが発生しました: {e}")
 
-def test_fetch_records(setup_database):
+def test_fetch_records():
+
+    # DBの初期化
+    execute_sql_file("sql/start.sql")
 
     # Call the function
     result = fetch_records()
 
-    assert result == [(1, '名前', '長文テキスト', 100, Decimal('1.25'), True, datetime.datetime(2024, 12, 28, 23, 19, 55, 94000), datetime.datetime(2024, 12, 28, 23, 20, 5, 461000))]
+    assert result == [(1, '名前', '長文テキスト', 100, Decimal('1.25'), True, datetime.datetime(2025, 3, 11, 23, 19, 55, 94000), datetime.datetime(2025, 3, 11, 23, 20, 5, 461000))]
 
+    # DBの後始末
+    execute_sql_file("sql/end.sql")
